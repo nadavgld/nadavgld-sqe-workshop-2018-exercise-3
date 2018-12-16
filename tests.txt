@@ -1,0 +1,90 @@
+x=1,y=1,z=3
+let sww = 4;
+function foo(x, y, z){
+    let a = x + 1;
+    let b = a + y;
+    let c = 1;
+    let d = 'king'
+    
+    if (d == 'king') {
+        if(x == 2){
+          c = 3;        
+        }else{
+          c = sww + 5;
+        }
+        return x + y + z + c;
+    } else if (b < z * 2) {
+        c = c + x + 5;
+        return x + y + z + c;
+    } else {
+        c = c + z + 5;
+        return x + y + z + c;
+    }
+
+}
+
+(x=3,y=1,z=[1,2,'nir'])
+let w = 1;
+function foo(x, y, z){
+ while(x<2){
+  let nadi='king';
+  let nadi2 = true;
+  if(nadi == z[2]){
+    return y + x * 2
+  }else if(nadi == 'king'){
+    if(nadi2 == false){
+     return w + x;
+    }else{
+     w = 2;
+    }
+  }else{
+    return true; 
+  }
+ }
+ y = w + 1;
+ let a = y;
+}
+
+x=1
+function f(x){
+    if (x > 2) {
+        x = x + 1;
+    } else if (x == '1') {
+        x = x - 1;
+    } else {
+        x = x * 3;
+    }
+    return x;
+}
+
+(x=3,y=2,z=[1,'test',false])
+function foo(x, y, z){
+   let a = x + 1;
+   let b = z[1];
+   let c = z[2];
+   z[0] = 2;     
+   while (a + 2 > z[0]) {
+      a = a + 4;
+      if(b == 'test'){
+         z[0] = 3;
+      }
+   }              
+}
+
+(x=3,y=1,z=[1,2,'nir'])
+function foo(x, y, z){
+            let a = x + 1;
+            let b = z[1];
+            let c = z[2];
+            z[0] = 2;
+        
+                let d = true;
+                a = a + 4;
+                if(c == 'test'){
+                    z[0] = 3;
+                }
+                else if(d == true){
+                        return c;
+                }
+            return x + y + z + a;                
+        }
