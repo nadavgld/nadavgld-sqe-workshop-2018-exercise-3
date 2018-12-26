@@ -1,6 +1,7 @@
 var _html;
 var _container = [];
 let line = 0;
+var parent = null;
 
 const TYPES = {
     FunctionDeclaration: 'function declaration',
@@ -30,9 +31,11 @@ function handleFuncDec(obj) {
         type: TYPES[obj.type],
         name: obj.id.name,
         condition: '',
-        value: ''
+        value: '',
+        parent
     };
 
+    parent = _newLine;
     _container.push(_newLine);
 
     if (obj.params.length > 0) {
@@ -49,7 +52,8 @@ function handleParams(param) {
         type: 'variable declaration',
         name: param.name,
         condition: '',
-        value: ''
+        value: '',
+        parent
     };
 
     _container.push(_newLine);
@@ -65,7 +69,8 @@ function handleVarDec(obj) {
             type: TYPES[obj.type],
             name: declare.id.name,
             condition: '',
-            value: declare.init ? recursiveChilds(declare.init) : ''
+            value: declare.init ? recursiveChilds(declare.init) : '',
+            parent
         };
 
         _container.push(_newLine);
@@ -76,21 +81,21 @@ function handleVarDec(obj) {
 
 function handleAlternate(obj) {
     var _obj = JSON.parse(JSON.stringify(obj.alternate));
-    var _newLine;
+    var _newLine, prevParent;
     const CURRENT_LINE = line + 1;
-
     _obj.type = _obj.type == 'IfStatement' ? 'ElseStatement' : _obj.type;
 
     if (_obj.type != 'ElseStatement') {
         _newLine = {
-            line: line + 1, type: 'else statement', name: '', value: '', condition: ''
+            line: line + 1, type: 'else statement', name: '', value: '', condition: '', parent
         };
-
         _container.push(_newLine);
     }
+    prevParent = parent;
+    parent = _newLine || parent;
     getBody([_obj]);
+    parent = prevParent;
 
-    // if (CURRENT_LINE)
     return _container.find(o => o.line == CURRENT_LINE);
 }
 
@@ -105,26 +110,31 @@ function handleConsequent(obj) {
 
 function handleInnerStates(obj) {
     // if (obj.consequent)
+    var _tempParent = parent;
     handleConsequent(obj);
 
+    parent = _tempParent.parent;
     if (obj.alternate)
         handleAlternate(obj);
 }
 
 function handleLoops(obj) {
     const _TEST = obj.test;
-    var _newObj = { line, type: TYPES[obj.type], name: '', value: '' }, _cond;
-    // if (_TEST) {
+    var _newObj = { line, type: TYPES[obj.type], name: '', value: '', parent }, _cond, prevParent;
     _cond = recursiveChilds(_TEST).toString();
     // _cond = _cond.startsWith('(') ? _cond.substring(1).substring(0, _cond.length - 2).trim() : _cond;
     _cond = _cond.substring(1).substring(0, _cond.length - 2).trim();
 
     _newObj.condition = _cond;
     _container.push(_newObj);
-    // }
+    prevParent = parent;
+    parent = _newObj || parent;
     if (obj.type == 'IfStatement' || obj.type == 'ElseStatement') {
         handleInnerStates(obj);
-    }
+    }else if(obj.type == 'WhileStatement')
+        getBody(obj.body.body);
+
+    parent = prevParent;
     return _newObj;
 }
 
@@ -156,17 +166,19 @@ function update_forHandler(obj) {
 function handleForStatement(obj) {
     var init = init_forHandler(obj);
     var test = recursiveChilds(obj.test);
-    var update = update_forHandler(obj);
+    var update = update_forHandler(obj), prevParent;
 
     // test = test.startsWith('(') ? test.substring(1).substring(0, test.length - 2).trim() : test;
     test = test.substring(1).substring(0, test.length - 2).trim();
+    var _newLine = { line, type: TYPES[obj.type], name: '', value: '', condition: init + ';' + test + ';' + update, parent };
+    _container.push(_newLine);
 
-    _container.push({ line, type: TYPES[obj.type], name: '', value: '', condition: init + ';' + test + ';' + update });
-
-    // if (obj.body)
+    prevParent = parent;
+    parent = _newLine;
     if (obj.body.type != 'BlockStatement') {
         getBody([obj.body]);
     }
+    parent = prevParent;
 }
 
 function handleOperator(_newObj, _EXPRESSION, dontPush) {
@@ -187,7 +199,7 @@ function handleOperator(_newObj, _EXPRESSION, dontPush) {
 
 function handleExpression(obj, dontPush) {
     const _EXPRESSION = obj.expression;
-    var _newObj = { line, type: TYPES[_EXPRESSION.type], condition: '' };
+    var _newObj = { line, type: TYPES[_EXPRESSION.type], condition: '', parent };
 
     if (_EXPRESSION.operator == '=') {
         _newObj = handleOperator(_newObj, _EXPRESSION, dontPush);
@@ -213,7 +225,8 @@ function handleReturn(obj) {
         line,
         type: TYPES[obj.type],
         name: '',
-        condition: ''
+        condition: '',
+        parent
     };
 
     var _val = recursiveChilds(obj.argument).toString();
@@ -266,7 +279,7 @@ function getBody(_body) {
         const obj = _body[index];
         typeHandler(obj);
 
-        if (obj.body) {
+        if (obj.body && obj.type != 'WhileStatement') {
             getBody(obj.body);
         }
     }

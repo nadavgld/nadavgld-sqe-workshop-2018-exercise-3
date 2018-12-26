@@ -36,7 +36,7 @@ function _init() {
 
 // First type handler - check the predicat type and handle it
 function handlePreds(pred) {
-    if (pred.type == 'function declaration'){
+    if (pred.type == 'function declaration') {
         symbolize.push(pred);
         _isGlobal = false;
     }
@@ -123,7 +123,7 @@ function handleVarDecleration(pred) {
 
         var_table[pred.name] = { value: valueFromDictionary, result: _result };
 
-        if (_isGlobal){
+        if (_isGlobal) {
             input.push({ key: pred.name, value: _result });
             symbolize.push(pred);
         }
@@ -156,7 +156,7 @@ function handleElse(_pred) {
     blockExit();
     var pred = JSON.parse(JSON.stringify(_pred));
 
-    var _result = getPreviousIfResult();
+    var _result = getPreviousIfResult(pred);
 
     pred.result = pred.result === undefined ? _result : pred.result && _result;
     return pred;
@@ -166,8 +166,11 @@ function handleElse(_pred) {
 function handleWhile(_pred) {
     var pred = JSON.parse(JSON.stringify(_pred));
     var _convertedCondition = convertValueToInputVars(pred.condition, false, true);
+    var _result = convertValueToInputVars(pred.condition, true, false);
 
     pred.condition = _convertedCondition;
+    pred.result = _result || true;
+
     symbolize.push(pred);
 }
 
@@ -208,15 +211,21 @@ function handleArrayQuick(value, toEval) {
 }
 
 function conditionHandler(value, toEval) {
-    // if (value === undefined) return '';
-    var _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)/);
-    _val.forEach(val => {
-        var replacement = conditionTypeHandler(val, toEval);
+    var _val, prevVal;
 
-        replacement = setReplacement(replacement, toEval, val);
-        value = replaceAll(value, val.trim(), replacement);
-        value = replaceAll(value, `''`, `'`);
-    });
+    for (var i = 0; i < 10; i++) {
+        prevVal = JSON.parse(JSON.stringify(value));
+        _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)/);
+
+        _val.forEach(val => {
+            var replacement = conditionTypeHandler(val, toEval);
+            replacement = setReplacement(replacement, toEval, val);
+            value = replaceAll(value, val.trim(), replacement);
+            value = replaceAll(value, `''`, `'`);
+        });
+        if (prevVal == value) break;
+        else value = replaceAll(value, `'`, ``);
+    }
     value = cleanValue(value);
     return toEval ? eval(value) : value;
 }
@@ -285,22 +294,28 @@ function removeZeros(x) {
 }
 
 // Run over latest If\else-if statements and check thier result (true/false)
-function getPreviousIfResult() {
+function getPreviousIfResult(pred) {
     var _hasTrue = false;
     var _prevIfs = 0;
     for (var i = symbolize.length - 1; i >= 0; i--) {
         _prevIfs = isNestedIf(symbolize[i], _prevIfs);
-        _hasTrue = checkPrevSymbol(symbolize[i]);
-        if (_hasTrue)
+        _hasTrue = checkPrevSymbol(symbolize[i], pred);
+        if (stopPrevRun(_hasTrue, _prevIfs))
             break;
 
         if (symbolize[i].type == 'if statement') {
             _prevIfs--;
             if (_prevIfs == -1)
                 break;
+            else
+                _hasTrue = false;
         }
     }
     return !_hasTrue;
+}
+
+function stopPrevRun(_hasTrue, _prevIfs) {
+    return _hasTrue && _prevIfs == 0;
 }
 
 function isNestedIf(symbol, _prevIfs) {
@@ -308,8 +323,11 @@ function isNestedIf(symbol, _prevIfs) {
 }
 
 // Returns true if previous symbol was if\else-if and its value is true
-function checkPrevSymbol(symbol) {
-    return (symbol.type == 'else if statement' || symbol.type == 'if statement') && symbol.result === true;
+function checkPrevSymbol(symbol, pred) {
+    if ((symbol.type == 'else if statement' || symbol.type == 'if statement') && symbol.parent && symbol.parent.line == pred.parent.line)
+        return symbol.result === true;
+
+    return false;
 }
 
 // Check if predicat is a Function-Param
@@ -584,8 +602,8 @@ function replaceAll(target, search, replacement) {
     return _res;
 }
 
-function _getInput(){
+function _getInput() {
     return input;
 }
 
-export default { symbolizer, convertInput, print, _getInput};
+export default { symbolizer, convertInput, print, _getInput, isParam };

@@ -49,8 +49,10 @@
             height: 20px;text-align: left;display: block
         }
     </style>
+    <script src="./libs/raphael.min.js"></script>
+    <script src="./libs/flowcharts.js"></script>
 </head>
-<input type="text" id="input_vector" value="" placeholder="Input Vector (x=3,y=2...)">
+<input type="text" id="input_vector" value="x=3,y=2,z=1" placeholder="Input Vector (x=3,y=2...)">
 
 <body>
     <table>
@@ -122,6 +124,8 @@
 
         </tbody>
     </table>
+
+    <div id="diagram"></div>
 
     <script src="dist/bundle.js"></script>
 </body>
