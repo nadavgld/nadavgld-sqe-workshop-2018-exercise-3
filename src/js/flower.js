@@ -17,7 +17,7 @@ function _init() {
     _symbols = [];
     _parsedCode = [];
     _groups = [];
-    _numOfGroups = 1;
+    _numOfGroups = 0;
 }
 
 function calculateChildren(code) {
@@ -218,7 +218,7 @@ function updateSequence(prevGroup, currentGroup) {
         // _seq += prevGroup.name + '->' + prevGroup.children[0].name + '->' + currentGroup.name + '\n';
         _seq += prevGroup.name + '->' + prevGroup.children[0].name + '\n';
     // else if (prevGroup.members[0].type == 'while statement')
-        // _seq += prevGroup.name + '(yes,no)->' + prevGroup.children[0].name + '\n';
+    // _seq += prevGroup.name + '(yes,no)->' + prevGroup.children[0].name + '\n';
     else if (prevGroup.type == 'condition')
         _seq += prevGroup.name + '(yes)->' + prevGroup.children[0].name + '\n' + prevGroup.name + '(no)->' + currentGroup.name + '\n';
     else
@@ -258,13 +258,14 @@ function getGroupFlow(group, result) {
 }
 
 function groupMembers(group) {
+    var _groupNum = '(' + group.name.split("g")[1] + ')\n';
     if (groupHasReturn(group))
-        return group.members[0].value;
+        return _groupNum + group.members[0].value;
 
     if (group.type == 'operation')
-        return group.members.map(m => m.name + ' = ' + m.value).join('\n');
+        return _groupNum + group.members.map(m => m.name + ' = ' + m.value).join('\n');
 
-    return group.members[0].condition;
+    return _groupNum + group.members[0].condition;
 }
 
 function groupHasReturn(group) {
