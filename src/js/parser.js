@@ -128,10 +128,11 @@ function handleLoops(obj) {
     _newObj.condition = _cond;
     _container.push(_newObj);
     prevParent = parent;
-    parent = _newObj || parent;
+    // parent = _newObj || parent;
+    parent = _newObj;
     if (obj.type == 'IfStatement' || obj.type == 'ElseStatement') {
         handleInnerStates(obj);
-    }else if(obj.type == 'WhileStatement')
+    } else if (obj.type == 'WhileStatement')
         getBody(obj.body.body);
 
     parent = prevParent;
@@ -211,13 +212,28 @@ function handleExpression(obj, dontPush) {
 }
 
 function handleCallee(_newObj, _EXPRESSION) {
-    var _value = recursiveChilds(_EXPRESSION.callee).toString();
+    var _value;
+    if (isPPOrMM(_EXPRESSION.operator)) {
+        if (_EXPRESSION.operator == '++') {
+            _value = _EXPRESSION.argument.name + ' + 1';
+        } else {
+            _value = _EXPRESSION.argument.name + ' - 1';
+        }
+        _newObj.value = _value;
+        _newObj.name = _EXPRESSION.argument.name;
+    } else {
+        _value = recursiveChilds(_EXPRESSION.callee).toString();
+        _newObj.value = '';
+        _newObj.name = _value;
+    }
     // _value = _value.startsWith('(') ? _value.substring(1).substring(0, _value.length - 2).trim() : _value;
 
-    _newObj.name = _value;
-    _newObj.value = '';
 
     _container.push(_newObj);
+}
+
+function isPPOrMM(operator) {
+    return operator == '++' || operator == '--';
 }
 
 function handleReturn(obj) {
@@ -336,8 +352,8 @@ function printTable() {
     _html = '';
     _container.forEach(obj => {
         // obj.value = obj.value == undefined ? '' : obj.value;
-        if (obj.type !== 'block statement')
-            _html += `<tr><td>${obj.line}</td><td>${obj.type}</td><td>${obj.name}</td><td>${obj.condition}</td><td>${obj.value}</td></tr>`;
+        // if (obj.type !== 'block statement')
+        _html += `<tr><td>${obj.line}</td><td>${obj.type}</td><td>${obj.name}</td><td>${obj.condition}</td><td>${obj.value}</td></tr>`;
     });
 
     return _html;

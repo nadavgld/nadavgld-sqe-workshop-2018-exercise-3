@@ -166,7 +166,7 @@ function handleElse(_pred) {
 function handleWhile(_pred) {
     var pred = JSON.parse(JSON.stringify(_pred));
     var _convertedCondition = convertValueToInputVars(pred.condition, false, true);
-    var _result = convertValueToInputVars(pred.condition, true, false);
+    var _result = convertValueToInputVars(pred.condition, true, true);
 
     pred.condition = _convertedCondition;
     pred.result = _result || true;
@@ -218,13 +218,13 @@ function conditionHandler(value, toEval) {
         _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)/);
 
         _val.forEach(val => {
+            val = _cleanValue(val);
             var replacement = conditionTypeHandler(val, toEval);
             replacement = setReplacement(replacement, toEval, val);
             value = replaceAll(value, val.trim(), replacement);
-            value = replaceAll(value, `''`, `'`);
+            value = replaceAll(value, '\'\'', '\'');
         });
         if (prevVal == value) break;
-        else value = replaceAll(value, `'`, ``);
     }
     value = cleanValue(value);
     return toEval ? eval(value) : value;
@@ -256,13 +256,26 @@ function conditionTypeHandler2(val, toEval) {
 function cleanValue(value) {
     const _arr = ['==', '===', '!=', '!==', '>', '<', '>=', '=>', '<=', '=<', '+', '*', '/', ':', ')', '('];
     _arr.forEach(symbol => {
-        value.replace(`' + ${symbol} + '`, symbol);
-        value.replace(`' + ${symbol}`, symbol);
-        value.replace(`${symbol} + '`, symbol);
+        // value.replace(`' + ${symbol} + '`, symbol);
+        value.replace('\'' + symbol, symbol);
+        value.replace(symbol + '\'', symbol);
     });
 
     return value;
+}
 
+function _cleanValue(val){
+    var _count = 0;
+    for(var i=0;i<val.length;i++){
+        if(val[i] == '\'')
+            _count++;
+    }
+
+    if(_count % 2 == 0)
+        return val;
+
+    val = replaceAll(val,'\'','');
+    return val;
 }
 
 function setReplacement(replacement, toEval, val) {
@@ -270,7 +283,7 @@ function setReplacement(replacement, toEval, val) {
         replacement = val.trim();
 
     if (isNumberOrString(replacement) && toEval)
-        replacement = `'` + replacement + `'`;
+        replacement = '\'' + replacement + '\'';
 
     return replacement;
 }

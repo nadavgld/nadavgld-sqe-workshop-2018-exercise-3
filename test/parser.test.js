@@ -1,5 +1,6 @@
 import assert from 'assert';
 import parser from '../src/js/parser.js';
+import { parseCode } from '../src/js/code-analyzer';
 
 var obj;
 describe('Check parser functionallity', () => {
@@ -79,28 +80,10 @@ describe('Check parser functionallity', () => {
     });
 
     it('While condition', () => {
-        obj = {
-            "type": "WhileStatement",
-            "test": {
-                "type": "BinaryExpression",
-                "operator": ">",
-                "left": {
-                    "type": "Identifier",
-                    "name": "x"
-                },
-                "right": {
-                    "type": "Literal",
-                    "value": 2,
-                    "raw": "2"
-                }
-            },
-            "body": {
-                "type": "EmptyStatement"
-            }
-        };
-
+        let parsedCode = parseCode('while(x>2){}');
+        var { _line, _container } = parser.objectToTable(parsedCode);
         assert.equal(
-            parser.handleLoops(obj).condition,
+            _container[0].condition,
             'x > 2'
         );
     });

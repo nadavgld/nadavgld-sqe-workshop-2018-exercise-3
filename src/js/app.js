@@ -40,18 +40,18 @@ function drawSVG(_code) {
     });
 }
 
-// function print(_html) {
-//     document.getElementById('sol').style.display = 'table';
-//     document.getElementById('outputTable').innerHTML = _html;
-// }
+function print(_html) {
+    document.getElementById('sol').style.display = 'table';
+    document.getElementById('outputTable').innerHTML = _html;
+}
 
-// function printSymbols(symbols) {
-//     var _html = '';
-//     var _inputToPrint = symbolizer._getInput().map(i => i.key + '=' + i.value).join(', ');
-//     _html += `<tr><td> ${_inputToPrint} </td></tr>`;
-//     symbols.forEach(symbol => {
-//         _html += `<tr><td style='background:${symbol.color}'> ${symbol.html} </td></tr>`;
-//     });
+function printSymbols(symbols) {
+    var _html = '';
+    var _inputToPrint = symbolizer._getInput().map(i => i.key + '=' + i.value).join(', ');
+    _html += `<tr><td> ${_inputToPrint} </td></tr>`;
+    symbols.forEach(symbol => {
+        _html += `<tr><td style='background:${symbol.color}'> ${symbol.html} </td></tr>`;
+    });
 
-//     $('#symbolizedCode').html(_html);
-// }
+    $('#symbolizedCode').html(_html);
+}

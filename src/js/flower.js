@@ -6,7 +6,7 @@ function code2groups(symbols, parsedCode) {
     _symbols = symbols;
     _parsedCode = parsedCode;
 
-    removeUnnecessarySymbols();
+    _parsedCode = removeUnnecessarySymbols(_parsedCode);
     divideToGroups(_parsedCode, _groups);
     // nestGroups();
 
@@ -60,10 +60,10 @@ function _filterChilds(code, childs) {
     return code;
 }
 
-function removeUnnecessarySymbols() {
+function removeUnnecessarySymbols(code) {
     var _tmpCode = [];
 
-    _parsedCode.forEach(line => {
+    code.forEach(line => {
         if (line.type != 'function declaration') {
             if (line.type == 'variable declaration' && isParam(line, _parsedCode)) {
                 return;
@@ -72,8 +72,8 @@ function removeUnnecessarySymbols() {
             }
         }
     });
-    _parsedCode = calculateChildren(_tmpCode);
-    return _parsedCode;
+    code = calculateChildren(_tmpCode);
+    return code;
 }
 
 function divideToGroups(code, groups) {
@@ -104,14 +104,14 @@ function insertObjectToGroup(obj, group, _srcGroups) {
             _numOfGroups++;
         }
         group = createNewGroup(obj);
-        if (group === undefined) {
-            _numOfGroups++;
-            return null;
-        }
+        // if (group === undefined) {
+        //     _numOfGroups++;
+        //     return null;
+        // }
         group.members.push(obj);
         divideToGroups(obj.children, group.children);
-        if (group.members.length != 0)
-            _srcGroups.push(group);
+        // if (group.members.length != 0)
+        _srcGroups.push(group);
         return null;
     }
     return group;
@@ -125,22 +125,22 @@ function createNewGroup(obj) {
         obj.value = 'return ' + obj.value;
     } else if (obj.type == 'else statement') {
         obj.condition = 'else';
-        _group.result = setResult(_symbols.find(s => s.line == obj.line).result);
+        _group.result = /*setResult*/(_symbols.find(s => s.line == obj.line).result);
         _group.type = 'start';
     }
     else {
-        _group.result = setResult(_symbols.find(s => s.line == obj.line).result);
+        _group.result = /*setResult*/(_symbols.find(s => s.line == obj.line).result);
         _group.type = 'condition';
     }
 
     return _group;
 }
 
-function setResult(res) {
-    if (res === undefined)
-        return true;
-    return res;
-}
+// function setResult(res) {
+//     if (res === undefined)
+//         return true;
+//     return res;
+// }
 
 function isDivder(obj) {
     return obj.type == 'if statement' || obj.type == 'else if statement' || obj.type == 'else statement' || obj.type == 'while statement' || obj.type == 'return statement';
@@ -258,7 +258,7 @@ function getGroupFlow(group, result) {
 }
 
 function groupMembers(group) {
-    var _groupNum = '(' + group.name.split("g")[1] + ')\n';
+    var _groupNum = '(' + group.name.split('g')[1] + ')\n';
     if (groupHasReturn(group))
         return _groupNum + group.members[0].value;
 
@@ -278,4 +278,4 @@ function groupHasReturn(group) {
 }
 
 
-export default { code2groups, groups2diagram };
+export default { code2groups, groups2diagram, isDivder, groupHasReturn, removeUnnecessarySymbols, groupMembers };
