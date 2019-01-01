@@ -215,7 +215,7 @@ function conditionHandler(value, toEval) {
 
     for (var i = 0; i < 10; i++) {
         prevVal = JSON.parse(JSON.stringify(value));
-        _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)/);
+        _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)|\'/);
 
         _val.forEach(val => {
             val = _cleanValue(val);
@@ -227,7 +227,24 @@ function conditionHandler(value, toEval) {
         if (prevVal == value) break;
     }
     value = cleanValue(value);
-    return toEval ? eval(value) : value;
+    // return toEval ? eval(value) : value;
+    return tryEval(toEval, value);
+}
+
+function tryEval(toEval, value) {
+    var _val;
+    if (toEval) {
+        try {
+            _val = eval(value.split('\'').join(''));
+        } catch (e) {
+            _val = eval(value);
+        }
+    } else {
+        _val = value;
+    }
+
+    return _val;
+
 }
 
 function conditionTypeHandler(val, toEval) {
@@ -264,17 +281,17 @@ function cleanValue(value) {
     return value;
 }
 
-function _cleanValue(val){
+function _cleanValue(val) {
     var _count = 0;
-    for(var i=0;i<val.length;i++){
-        if(val[i] == '\'')
+    for (var i = 0; i < val.length; i++) {
+        if (val[i] == '\'')
             _count++;
     }
 
-    if(_count % 2 == 0)
+    if (_count % 2 == 0)
         return val;
 
-    val = replaceAll(val,'\'','');
+    val = replaceAll(val, '\'', '');
     return val;
 }
 

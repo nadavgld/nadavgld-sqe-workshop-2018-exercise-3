@@ -102,7 +102,7 @@ describe('Check Symbolizer functionallity', () => {
 
         assert.equal(
             symbols[2].result,
-            false
+            true
         );
     });
 

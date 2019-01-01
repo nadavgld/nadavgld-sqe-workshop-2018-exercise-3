@@ -173,7 +173,7 @@ function convertGroupsToData(groups, prev, sequence, diagram) {
     var initResult = true;
     for (var i = 0; i < groups.length; i++) {
         var group = groups[i];
-        initResult = group.type == 'operation' ? true : initResult;
+        initResult = isDefaultTrue(prev) ? true : initResult;
         var { _txt, _result } = getGroupFlow(group, initResult);
 
         diagram += '\n' + _txt;
@@ -181,7 +181,7 @@ function convertGroupsToData(groups, prev, sequence, diagram) {
         if (prev.type == 'operation')
             sequence += prev.name + '->' + group.name + '\n';
         else {
-            sequence += addSequenceToCondtion(prev, group, getNextGroup(groups, i));
+            sequence += addSequenceToCondtion(prev, group, getNextGroup(groups, i), groups, i);
         }
         initResult = _result;
         prev = group;
@@ -190,7 +190,13 @@ function convertGroupsToData(groups, prev, sequence, diagram) {
     return { diagram, sequence, prev };
 }
 
-function addSequenceToCondtion(prevGroup, currentGroup, originCurrent) {
+function isDefaultTrue(prev) {
+    if (prev)
+        return prev.members && (prev.members[0].type == 'else statement' || prev.type == 'operation');
+    return false;
+}
+
+function addSequenceToCondtion(prevGroup, currentGroup, originCurrent, parent, indxAtParent) {
     var _seq = '', _prev, _curr;
     _seq += updateSequence(prevGroup, currentGroup);
 
@@ -199,16 +205,23 @@ function addSequenceToCondtion(prevGroup, currentGroup, originCurrent) {
         _curr = prevGroup.children[i];
 
         if (_curr === undefined) {
-            if (prevGroup.members[0].type == 'while statement') {
-                _curr = prevGroup;
-            } else if (prevGroup.members[0].condition == 'else')
-                _curr = currentGroup;
-            else
-                _curr = originCurrent;
+            _curr = calculateCurrent(prevGroup, parent, indxAtParent, originCurrent, currentGroup);
         }
-        _seq += addSequenceToCondtion(_prev, _curr, originCurrent);
+        _seq += addSequenceToCondtion(_prev, _curr, originCurrent, prevGroup, i - 1);
     }
     return _seq;
+}
+
+function calculateCurrent(prevGroup, parent, indxAtParent, originCurrent, currentGroup) {
+    var _curr;
+    if (prevGroup.members[0].type == 'while statement') {
+        _curr = prevGroup;
+    } else if (prevGroup.members[0].condition == 'else')
+        _curr = currentGroup;
+    else
+        _curr = getNextGroup(parent.children, indxAtParent) || originCurrent;
+
+    return _curr;
 }
 
 function updateSequence(prevGroup, currentGroup) {
@@ -228,6 +241,8 @@ function updateSequence(prevGroup, currentGroup) {
 }
 
 function getNextGroup(groups, indx) {
+    if (groups === undefined) return undefined;
+
     for (var i = indx + 1; i < groups.length; i++) {
         const _member = groups[i].members[0];
         if (_member.type !== 'else statement' && _member.type !== 'else if statement')
@@ -238,23 +253,29 @@ function getNextGroup(groups, indx) {
 }
 
 function getGroupFlow(group, result) {
-    var prevResult = group.result && result, resultToReturn, childResult;
-
+    var groupResult = (group.result && result), resultToReturn, childResult, prevChild;
     var txt = group.name + '=>' + group.type + ': ' + groupMembers(group) + ' | ' + result + '\n';
 
-    childResult = prevResult;
+    childResult = groupResult;
     group.children.forEach(child => {
+        childResult = isDefaultTrue(prevChild) && !isConditionType(child) ? true && groupResult : childResult;
         var { _txt, _result } = getGroupFlow(child, childResult);
         childResult = _result;
         txt += _txt;
+        prevChild = child;
     });
 
-    if (group.type == 'condition' && prevResult === true && group.members[0].type != 'while statement')
-        resultToReturn = !prevResult;
+    if (isConditionType(group))
+        resultToReturn = groupResult === false && result === true;
     else
         resultToReturn = result;
 
     return { _txt: txt, _result: resultToReturn };
+}
+
+function isConditionType(group) {
+    // return result === true && (group.members[0].type == 'else statement' || group.type == 'operation')
+    return (group.members[0].type == 'else if statement' || group.members[0].type == 'if statement');
 }
 
 function groupMembers(group) {

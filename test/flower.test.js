@@ -9,7 +9,7 @@ var input_vector;
 
 describe('Check Symbolizer functionallity', () => {
     it('Amount of groups', () => {
-        var input_vector2 = "x=3,y=2,z=1";
+        var input_vector2 = "x=1,y=2,z=6";
 
         var func = `
         function foo(x, y, z){
@@ -18,7 +18,7 @@ describe('Check Symbolizer functionallity', () => {
             let c = 0;
             
             if (b < z) {
-                c = c + 5;
+                b = c + 125;
                 if (b < x) {
                    c = c + 6;
                 } else if (b < z * 3) {
@@ -26,6 +26,7 @@ describe('Check Symbolizer functionallity', () => {
                 } else {
                    c = c + z + 8;
                 }
+                z = 1;
             } else if (b < z * 2) {
                 c = c + x + 5;
             } else {
@@ -325,6 +326,7 @@ describe('Check Symbolizer functionallity', () => {
         var { _line, _container } = parser.objectToTable(parsedCode);
         var symbols = symbolizer.symbolizer(_container, input_vector2, _line);
         var groups = flower.code2groups(symbols, _container);
+        flower.groups2diagram(groups)
 
         assert.equal(
            flower.groupMembers(groups[2]),
