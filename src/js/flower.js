@@ -136,19 +136,9 @@ function createNewGroup(obj) {
     return _group;
 }
 
-// function setResult(res) {
-//     if (res === undefined)
-//         return true;
-//     return res;
-// }
-
 function isDivder(obj) {
     return obj.type == 'if statement' || obj.type == 'else if statement' || obj.type == 'else statement' || obj.type == 'while statement' || obj.type == 'return statement';
 }
-
-// function isCondition(obj) {
-//     return obj.type == 'if statement' || obj.type == 'else if statement' || obj.type == 'else statement';
-// }
 
 function isParam(obj, table) {
     return symbolizer.isParam(obj, table);
@@ -164,7 +154,11 @@ function groups2diagram(groups) {
     var { diagram, sequence, prev } = convertGroupsToData(groups, _prev, _sequence, _diagram);
 
     _diagram = diagram + '\n';
-    _sequence += sequence + prev.name + '->e';
+
+    if (prev.type == 'condition')
+        _sequence += sequence + prev.name + '(no)->e';
+    else
+        _sequence += sequence + prev.name + '->e';
 
     return _diagram + '\n' + _sequence;
 }
@@ -178,16 +172,25 @@ function convertGroupsToData(groups, prev, sequence, diagram) {
 
         diagram += '\n' + _txt;
 
-        if (prev.type == 'operation')
-            sequence += prev.name + '->' + group.name + '\n';
-        else {
-            sequence += addSequenceToCondtion(prev, group, getNextGroup(groups, i), groups, i);
-        }
+        sequence += handlePrevGroupSequence(prev, group, groups, i);
         initResult = _result;
         prev = group;
     }
 
+    // sequence += handlePrevGroupSequence(prev, { name: 'end', type: 'operation' }, groups, i)
+
     return { diagram, sequence, prev };
+}
+
+function handlePrevGroupSequence(prev, group, groups, i) {
+    var sequence;
+    if (prev.type == 'operation')
+        sequence = prev.name + '->' + group.name + '\n';
+    else {
+        sequence = addSequenceToCondtion(prev, group, getNextGroup(groups, i), groups, i);
+    }
+
+    return sequence;
 }
 
 function isDefaultTrue(prev) {

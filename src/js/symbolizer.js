@@ -212,22 +212,22 @@ function handleArrayQuick(value, toEval) {
 
 function conditionHandler(value, toEval) {
     var _val, prevVal;
-
     for (var i = 0; i < 10; i++) {
         prevVal = JSON.parse(JSON.stringify(value));
-        _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)|\'/);
-
+        _val = value.split(/==|===|!=|!==|[+]|-|[*]|\/|>|<|>=|=>|<=|=<|:|\(|\)/);
         _val.forEach(val => {
-            val = _cleanValue(val);
-            var replacement = conditionTypeHandler(val, toEval);
+            var _val = replaceAll(val, '\'', '');
+            var replacement = conditionTypeHandler(_val.trim(), toEval);
             replacement = setReplacement(replacement, toEval, val);
+            // value = replaceAll(value, val.trim(), replacement);
+            // value = replaceAll(value, '\'', '');
+            if (replacement !== undefined)
+                replacement = _cleanValue(replacement, toEval);
             value = replaceAll(value, val.trim(), replacement);
-            value = replaceAll(value, '\'\'', '\'');
         });
         if (prevVal == value) break;
     }
     value = cleanValue(value);
-    // return toEval ? eval(value) : value;
     return tryEval(toEval, value);
 }
 
@@ -272,26 +272,28 @@ function conditionTypeHandler2(val, toEval) {
 
 function cleanValue(value) {
     const _arr = ['==', '===', '!=', '!==', '>', '<', '>=', '=>', '<=', '=<', '+', '*', '/', ':', ')', '('];
+
     _arr.forEach(symbol => {
         // value.replace(`' + ${symbol} + '`, symbol);
         value.replace('\'' + symbol, symbol);
         value.replace(symbol + '\'', symbol);
     });
 
+    value = replaceAll(value, '\'\'', '\'');
+
     return value;
 }
 
-function _cleanValue(val) {
-    var _count = 0;
-    for (var i = 0; i < val.length; i++) {
-        if (val[i] == '\'')
-            _count++;
+function _cleanValue(val, toEval) {
+    var result = '';
+    if (isNumberOrString(val) && toEval) {
+        for (var i = 0; i < val.length; i++)
+            if (val[i] !== '\'')
+                result += val[i];
+
+        return '\'' + result + '\'';
     }
 
-    if (_count % 2 == 0)
-        return val;
-
-    val = replaceAll(val, '\'', '');
     return val;
 }
 

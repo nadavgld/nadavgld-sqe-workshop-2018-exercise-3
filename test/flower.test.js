@@ -7,7 +7,7 @@ import { parseCode } from '../src/js/code-analyzer';
 var obj;
 var input_vector;
 
-describe('Check Symbolizer functionallity', () => {
+describe('Check FLower functionallity', () => {
     it('Amount of groups', () => {
         var input_vector2 = "x=1,y=2,z=6";
 
